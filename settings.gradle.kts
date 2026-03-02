@@ -2,5 +2,5 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = "pps-23-24-lab01b"
+rootProject.name = "pps-lab01b"
 
