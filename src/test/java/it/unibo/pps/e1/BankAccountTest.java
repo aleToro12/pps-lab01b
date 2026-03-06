@@ -1,43 +1,95 @@
 package it.unibo.pps.e1;
 
-import it.unibo.pps.e1.BankAccount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class BankAccountTest {
+abstract class BankAccountTest {
 
-    private BankAccount account;
+    protected BankAccount account;
+    protected int depositAmount;
+
+    protected abstract BankAccount createAccount();
 
     @BeforeEach
-    void init(){
-        this.account = new BankAccount();
+    void init() {
+        this.account = createAccount();
+        this.depositAmount = 1000;
     }
 
     @Test
-    public void testInitiallyEmpty() {
-        assertEquals(0, this.account.getBalance());
+    void testInitiallyEmpty() {
+        assertEquals(0, account.getBalance());
     }
 
     @Test
-    public void testCanDeposit() {
-        this.account.deposit(1000);
-        assertEquals(1000, this.account.getBalance());
+    void testCanDeposit() {
+        account.deposit(depositAmount);
+        assertEquals(depositAmount, account.getBalance());
     }
 
     @Test
-    public void testCanWithdraw() {
-        this.account.deposit(1000);
-        this.account.withdraw(200);
-        assertEquals(799, this.account.getBalance());
+    void testCannotWithdrawMoreThanAvailable() {
+        account.deposit(depositAmount);
+        assertThrows(IllegalStateException.class, () -> account.withdraw(1200));
+    }
+}
+
+class SilverBankAccountTest extends BankAccountTest {
+    @Override
+    protected BankAccount createAccount() {
+        return new SilverBankAccount(new CoreBankAccount());
     }
 
     @Test
-    public void testCannotWithdrawMoreThanAvailable(){
-        this.account.deposit(1000);
-        assertThrows(IllegalStateException.class, () -> this.account.withdraw(1200));
+    void testCanWithdrawWithFee() {
+        account.deposit(depositAmount);
+        account.withdraw(200);
+        assertEquals(799, account.getBalance());
+    }
+}
+
+class GoldBankAccountTest extends BankAccountTest {
+    @Override
+    protected BankAccount createAccount() {
+        return new GoldBankAccount(new CoreBankAccount());
+    }
+
+    @Override
+    @Test
+    void testCannotWithdrawMoreThanAvailable() {
+        account.deposit(depositAmount);
+        account.withdraw(1400);
+        assertEquals(-400, account.getBalance());
+        assertThrows(IllegalStateException.class, () -> account.withdraw(200));
+    }
+
+    @Test
+    void testCanWithdrawWithoutFee() {
+        account.deposit(depositAmount);
+        account.withdraw(200);
+        assertEquals(800, account.getBalance());
+    }
+}
+
+class BronzeBankAccountTest extends BankAccountTest {
+    @Override
+    protected BankAccount createAccount() {
+        return new BronzeBankAccount(new CoreBankAccount());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "150,  50,  100",
+            "200,  101,  98",
+    })
+    void testCanWithdrawWithFeeLimit(int deposit, int withdraw, int expected) {
+        account.deposit(deposit);
+        account.withdraw(withdraw);
+        assertEquals(expected, account.getBalance());
     }
 
 }
