@@ -3,46 +3,56 @@ package it.unibo.pps.e2;
 import java.util.*;
 
 public class LogicsImpl implements Logics {
-	
-	private final Pair<Integer,Integer> pawn;
-	private Pair<Integer,Integer> knight;
+
+    private final Map<String, Piece> pieces = new HashMap<>();
 	private final Random random = new Random();
 	private final int size;
 	 
     public LogicsImpl(int size){
     	this.size = size;
-        this.pawn = this.randomEmptyPosition();
-        this.knight = this.randomEmptyPosition();	
+        this.pieces.put("pawn", new Pawn(randomEmptyPosition()));
+        this.pieces.put("knight", new Knight(randomEmptyPosition()));
     }
-    
-	private final Pair<Integer,Integer> randomEmptyPosition(){
-    	Pair<Integer,Integer> pos = new Pair<>(this.random.nextInt(size),this.random.nextInt(size));
-    	// the recursive call below prevents clash with an existing pawn
-    	return this.pawn!=null && this.pawn.equals(pos) ? randomEmptyPosition() : pos;
+
+    //Ho introdotto questo costruttore per semplicità nei test
+    public LogicsImpl(int size, Piece knight, Piece pawn) {
+        this.size = size;
+        this.pieces.put("knight", knight);
+        this.pieces.put("pawn", pawn);
+    }
+
+    private Pair<Integer, Integer> randomEmptyPosition() {
+        Pair<Integer, Integer> pos;
+        do {
+            pos = new Pair<>(random.nextInt(size), random.nextInt(size));
+        } while (isPositionOccupied(pos));
+        return pos;
+    }
+
+    private boolean isPositionOccupied(Pair<Integer, Integer> pos) {
+        return pieces.values().stream().anyMatch(p -> p.getPos().equals(pos));
     }
     
 	@Override
-	public boolean hit(int row, int col) {
+	public boolean hit(String type, int row, int col) {
 		if (row<0 || col<0 || row >= this.size || col >= this.size) {
 			throw new IndexOutOfBoundsException();
 		}
-		// Below a compact way to express allowed moves for the knight
-		int x = row-this.knight.getX();
-		int y = col-this.knight.getY();
-		if (x!=0 && y!=0 && Math.abs(x)+Math.abs(y)==3) {
-			this.knight = new Pair<>(row,col);
-			return this.pawn.equals(this.knight);
+
+        Piece piece = pieces.get(type);
+
+		if (piece.canMoveTo(row, col)) {
+			piece.setPos(new Pair<>(row,col));
+			return pieces.values().stream()
+                    .filter(entry -> !entry.equals(piece))
+                    .anyMatch(p -> p.getPos().equals(piece.getPos()));
 		}
 		return false;
 	}
 
-	@Override
-	public boolean hasKnight(int row, int col) {
-		return this.knight.equals(new Pair<>(row,col));
-	}
-
-	@Override
-	public boolean hasPawn(int row, int col) {
-		return this.pawn.equals(new Pair<>(row,col));
-	}
+    @Override
+    public boolean hasPiece(String type, int row, int col) {
+        Piece p = pieces.get(type);
+        return p != null && p.getPos().equals(new Pair<>(row, col));
+    }
 }

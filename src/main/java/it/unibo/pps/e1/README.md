@@ -36,3 +36,57 @@ Create two additional account types:
 2. **Bronze Account**:
     - Conditional fee: if withdrawal amount < 100, fee = 0; otherwise fee = 1
     - No overdraft allowed (balance must always be >= 0)
+
+```mermaid
+classDiagram
+class BankAccount {
+<<interface>>
++getBalance() int
++deposit(int amount)
++withdraw(int amount)
+}
+
+    class CoreBankAccount {
+        -int balance
+        +getBalance() int
+        +deposit(int amount)
+        +withdraw(int amount)
+    }
+
+    class BronzeBankAccount {
+        -CoreBankAccount base
+        -int FEE_LIMIT$
+        -int BRONZE_FEE$
+        +BronzeBankAccount(CoreBankAccount account)
+        +getBalance() int
+        +deposit(int amount)
+        +withdraw(int amount)
+    }
+
+    class SilverBankAccount {
+        -CoreBankAccount base
+        -int SILVER_FEE$
+        +SilverBankAccount(CoreBankAccount account)
+        +getBalance() int
+        +deposit(int amount)
+        +withdraw(int amount)
+    }
+
+    class GoldBankAccount {
+        -CoreBankAccount base
+        -int OVERDRAFT$
+        +GoldBankAccount(CoreBankAccount account)
+        +getBalance() int
+        +deposit(int amount)
+        +withdraw(int amount)
+    }
+
+    BankAccount <|.. CoreBankAccount : implements
+    BankAccount <|.. BronzeBankAccount : implements
+    BankAccount <|.. SilverBankAccount : implements
+    BankAccount <|.. GoldBankAccount : implements
+
+    BronzeBankAccount --> CoreBankAccount : decorates/delegates
+    SilverBankAccount --> CoreBankAccount : decorates/delegates
+    GoldBankAccount --> CoreBankAccount : decorates/delegates
+```

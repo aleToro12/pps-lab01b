@@ -50,3 +50,55 @@ it could only move to 3 squares,
 i.e., (3,1) by capturing the pawn, (2,2) and (2,4).
 Clicking on an invalid position should not do anything.
 When the knight lands on the pawn, the application should be closed.
+
+UML della logica implementata:
+
+```mermaid
+classDiagram
+    class Logics {
+        <<interface>>
+        +hit(String type, int row, int col) boolean
+        +hasPiece(String type, int row, int col) boolean
+    }
+
+    class LogicsImpl {
+        -Map~String,Piece~ pieces
+        -int size
+        -Random random
+        +LogicsImpl(int size)
+        +LogicsImpl(int size, Piece knight, Piece pawn)
+        -randomEmptyPosition() Pair
+        -isPositionOccupied(Pair pos) boolean
+    }
+
+    class Piece {
+        <<abstract>>
+        -Pair~Integer,Integer~ pos
+        +getPos() Pair
+        +setPos(Pair pos)
+        +canMoveTo(int row, int col)* boolean
+    }
+
+    class Knight {
+        +canMoveTo(int row, int col) boolean
+    }
+
+    class Pawn {
+        +canMoveTo(int row, int col) boolean
+    }
+
+    class Pair~X,Y~ {
+-X x
+-Y y
++getX() X
++getY() Y
++equals(Object o) boolean
+}
+
+Logics <|.. LogicsImpl : implements
+LogicsImpl "1" *-- "many" Piece : manages
+Piece <|-- Knight : extends
+Piece <|-- Pawn : extends
+Piece --> Pair : uses
+LogicsImpl --> Pair : uses
+```
